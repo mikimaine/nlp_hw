@@ -3,39 +3,18 @@
 ################################################################################
 #
 # FILE:
-#   hw03_mam230009.py
+#   improved_ngram_model.py
 # AUTHOR:
 #   Mikiyas Amdu Midru
 #   MAM230009
 # DESCRIPTION:
-#   This program implements an N-gram language model for text generation using
-#   natural language processing techniques. It reads text input from a file
-#   (default: "gatsby_book.txt"), tokenizes the text into sentences and words,
-#   builds various N-gram models (bigram, trigram, 4-gram, and 5-gram), and
-#   generates random sentences based on these models.
-#
-#   The program demonstrates simple language modeling by:
-#   1. Processing and tokenizing input text
-#   2. Building probability distributions based on N-gram frequencies
-#   3. Using these distributions for random text generation
-#   4. Handling various text formatting issues including quotation marks and punctuation
-#
-#   Each generated sentence follows the statistical patterns found in the source text,
-#   with higher-order N-grams (4-gram, 5-gram) generally producing more coherent output
-#   that better resembles the original text's style and structure.
+#   Homework 3 - Improved N-gram Language Model
 #
 # DEPENDENCIES:
-#   - Python 3.12.2 or higher
-#   - nltk (Natural Language Toolkit) - for text tokenization
-#   - re (Regular Expressions) - for text processing and cleaning
-#   - random - for probabilistic sentence generation
-#   - sys - for file handling and error reporting
+#       Created with Python env 3.12.2
+#       Dependencies: re, nltk, random, sys
 #
-# USAGE:
-#   Ensure the input text file (gatsby_book.txt) is in the same directory,
-#   then run the program with: python hw03_mam230009.py
 ################################################################################
-
 import re
 import random
 import sys
@@ -52,13 +31,14 @@ def check_nltk_resources():
         print("Downloading required NLTK resources...")
         nltk.download('punkt')
 
+
 def tokenize_into_sentences(text):
     """
     Split text into sentences using NLTK's sentence tokenizer.
-
+    
     Args:
         text (str): The input text to tokenize
-
+        
     Returns:
         list: A list of sentences
     """
@@ -69,26 +49,28 @@ def tokenize_into_sentences(text):
     sentences = [s.strip() for s in sentences if s.strip()]
     return sentences
 
+
 def tokenize_into_words(sentence):
     """
     Split a sentence into words using NLTK's word tokenizer.
-
+    
     Args:
         sentence (str): The input sentence to tokenize
-
+        
     Returns:
         list: A list of tokens
     """
     return nltk.word_tokenize(sentence)
 
+
 def build_ngram_dict(tokens, n):
     """
     Build an n-gram dictionary from a list of tokens.
-
+    
     Args:
         tokens (list): List of tokens
         n (int): Size of n-gram
-
+        
     Returns:
         dict: Dictionary mapping n-grams to their counts
     """
@@ -102,11 +84,11 @@ def build_ngram_dict(tokens, n):
 def build_model_for_generation(ngram_counts, n):
     """
     Transform raw n-gram counts into a model suitable for text generation.
-
+    
     Args:
         ngram_counts (dict): Dictionary of n-gram counts
         n (int): Size of n-gram
-
+        
     Returns:
         dict: A dictionary mapping (n-1)-gram prefixes to possible next tokens with counts
     """
@@ -191,24 +173,40 @@ def generate_sentence(ngram_counts, n, seed=None, max_length=MAX_LENGTH_STANDARD
             if rand_val <= cumulative:
                 next_token = token
                 break
+
         sentence_tokens.append(next_token)
+
+        # Check for sentence-ending punctuation
         if next_token in [".", "!", "?"] or re.match(r'[.?!]["\']?$', next_token):
             break
+
         current_prefix = tuple(sentence_tokens[-prefix_size:])
 
+    # Ensure the sentence ends with proper punctuation
     last_tok = sentence_tokens[-1]
     if not re.match(r'[.?!]["\']?$', last_tok):
         sentence_tokens.append(".")
 
+    # Clean up the token sequence
     clean_tokens = clean_token_sequence(sentence_tokens)
 
+    # Format the sentence with proper spacing
     generated = " ".join(clean_tokens)
+
+    # Fix spacing around punctuation
     generated = re.sub(r'\s+([,.;:?!])', r'\1', generated)
+
+    # Fix quotation spacing issues
     generated = re.sub(r'"\s+', '"', generated)
     generated = re.sub(r'\s+"', '"', generated)
+
+    # Replace any remaining problematic quotation marks
     generated = re.sub(r'``|\'\'', '"', generated)
+
+    # Fix multiple spaces
     generated = re.sub(r'\s{2,}', ' ', generated)
 
+    # Ensure proper capitalization
     if generated and generated[0].islower():
         generated = generated[0].upper() + generated[1:]
 
@@ -236,8 +234,10 @@ def process_text_file(filename):
     sentences = tokenize_into_sentences(text)
     print(f"Processed {len(sentences)} sentences from {filename}")
 
+    # Initialize n-gram dictionaries
     ngram_dicts = {2: {}, 3: {}, 4: {}, 5: {}}
 
+    # Process each sentence
     for idx, sentence in enumerate(sentences, start=1):
         print(f"Sentence {idx:03d} ----------------------------")
         print(sentence)
@@ -245,12 +245,14 @@ def process_text_file(filename):
 
         tokens = tokenize_into_words(sentence)
 
+        # Update all n-gram dictionaries with this sentence
         for n in ngram_dicts:
             if len(tokens) >= n:  # Only update if sentence has enough tokens
                 sentence_ngrams = build_ngram_dict(tokens, n)
                 for ngram, count in sentence_ngrams.items():
                     ngram_dicts[n][ngram] = ngram_dicts[n].get(ngram, 0) + count
 
+    # Generate example sentences using each model
     for n, ngram_dict in ngram_dicts.items():
         print(f"\n==== Example: Generating a random sentence {colored_print(f'({n}-gram)')} ===\n")
         max_len = MAX_LENGTH_EXTENDED if n > 3 else MAX_LENGTH_STANDARD
@@ -259,7 +261,10 @@ def process_text_file(filename):
 
 
 def main():
+    # Check for required NLTK resources
     check_nltk_resources()
+
+    # Process the training text file
     process_text_file(TRAINING_FILE)
 
 
