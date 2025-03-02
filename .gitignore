@@ -4,3 +4,4 @@ Glencoe
 __pycache__
 *.pyc
 *.pyo
+.idea
